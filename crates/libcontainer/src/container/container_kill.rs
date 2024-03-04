@@ -48,9 +48,12 @@ impl Container {
         signal: S,
         all: bool,
     ) -> Result<(), LibcontainerError> {
+        println!("do_kill");
         if all {
+            println!("do_kill all");
             self.kill_all_processes(signal)
         } else {
+            println!("do_kill one");
             self.kill_one_process(signal)
         }
     }
@@ -59,7 +62,7 @@ impl Container {
         let signal = signal.into().into_raw();
         let pid = self.pid().unwrap();
 
-        tracing::debug!("kill signal {} to {}", signal, pid);
+        println!("kill signal {} to {}", signal, pid);
 
         match signal::kill(pid, signal) {
             Ok(_) => {}
@@ -94,6 +97,7 @@ impl Container {
     }
 
     fn kill_all_processes<S: Into<Signal>>(&self, signal: S) -> Result<(), LibcontainerError> {
+        println!("kill_all_processes");
         let signal = signal.into().into_raw();
         let cmanager =
             libcgroups::common::create_cgroup_manager(libcgroups::common::CgroupConfig {
@@ -113,7 +117,7 @@ impl Container {
         let pids = cmanager.get_all_pids()?;
         pids.iter()
             .try_for_each(|&pid| {
-                tracing::debug!("kill signal {} to {}", signal, pid);
+                println!("kill signal {} to {}", signal, pid);
                 let res = signal::kill(pid, signal);
                 match res {
                     Err(nix::errno::Errno::ESRCH) => {
